@@ -15,6 +15,11 @@ namespace App;
  */
 class Products {
 
+    /**
+     * Get category by product id
+     * @param type $id
+     * @return boolean / cat_id
+     */
     public static function findCategory($id) {
         if ($products = self::load()) {
             foreach ($products as $product) {
@@ -26,6 +31,10 @@ class Products {
         }
     }
 
+    /**
+     * Load Produts
+     * @return boolean
+     */
     public static function load() {
         $filePath = storage_path('app') . "/products.json";
 

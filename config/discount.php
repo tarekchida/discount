@@ -1,6 +1,9 @@
  
 <?php
 
+/**
+ * Disount config
+ */
 return [
     'global' => [
 

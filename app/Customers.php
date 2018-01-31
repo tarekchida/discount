@@ -15,10 +15,15 @@ namespace App;
  */
 class Customers {
 
+    /**
+     * Get Customer by id
+     * @param type $id
+     * @return boolean
+     */
     public static function find($id) {
         if ($customers = self::load()) {
             foreach ($customers as $customer) {
-                if ($customer->id == $id) { 
+                if ($customer->id == $id) {
                     return $customer;
                 }
             }
@@ -26,6 +31,10 @@ class Customers {
         }
     }
 
+    /**
+     * Load Cutomers
+     * @return boolean
+     */
     public static function load() {
         $filePath = storage_path('app') . "/customers.json";
 
