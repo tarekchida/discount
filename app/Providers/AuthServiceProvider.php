@@ -26,7 +26,8 @@ class AuthServiceProvider extends ServiceProvider {
 
 
         $this->app['auth']->viaRequest('api', function ($request) {
-            if (Customers::find(1)) {
+            $cutomerId = $request->input('customer-id', 0);
+            if (Customers::find($cutomerId)) {
                 return TRUE;
             }
         });
