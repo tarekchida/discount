@@ -27,13 +27,18 @@ class DiscountController extends Controller {
             return response('Order is empty', 400);
         }
 
-        // Set global order discount
+        //Set Free items discount
         foreach ($this->order['items'] as &$item) {
             $this->itemFree($item);
         }
 
+        //Get disount for cheapest item
+        $this->discountCheapest();
 
+        //Recalculate Total
         $this->totalCalculator();
+
+        // Set global order discount
         $this->globalDiscount();
         return response($this->order);
     }
@@ -49,10 +54,52 @@ class DiscountController extends Controller {
         $this->order['total'] = $total;
     }
 
+    /**
+     * Check disount for cheapest item
+     */
     private function discountCheapest() {
-        $items = $this->order['items'];
-        foreach ($items as $item) {
-            
+        $cheapestConfig = config('discount.cheapest');
+
+        foreach ($cheapestConfig as $cat => $discount) {
+            $relatedProducts = array();
+            foreach ($this->order['items'] as $item) {
+                if (Products::findCategory($item['product-id']) == $cat) {
+                    $relatedProducts[$item['product-id']] = $item['unit-price'];
+                }
+            }
+
+            if (count($relatedProducts > 1)) {
+                $this->setDiscountCheapest($relatedProducts, $discount, $cat);
+            }
+        }
+    }
+
+    /**
+     * Set disount for cheapest item
+     * @param type $relatedProducts
+     * @param type $discount
+     * @param type $cat
+     */
+    private function setDiscountCheapest($relatedProducts, $discount, $cat) {
+        //Sort ASC by price 
+        asort($relatedProducts);
+
+        //Get the lowest price
+        reset($relatedProducts);
+        $productId = key($relatedProducts);
+
+        //Edit order wtih new data
+        foreach ($this->order['items'] as &$item) {
+            if ($item['product-id'] == $productId) {
+                $item['unit-price'] = getDiscountedPrice($item['unit-price'], $discount);
+                $item['total'] = $item['unit-price'] * $item['quantity'];
+                //Add discount data 
+                $this->order['discounts']['cheapest'][] = array(
+                    'product-id' => $item['product-id'],
+                    'category' => $cat,
+                    'discount' => $item['unit-price']
+                );
+            }
         }
     }
 
@@ -68,10 +115,13 @@ class DiscountController extends Controller {
 
                 // Get number of free items 
                 $freeItems = $item['quantity'] / $number;
+
                 //Is there free items ?
                 if ((int) $freeItems >= 1) {
+
                     //Calculate new total
                     $item['total'] = number_format($item['unit-price'] * ($item['quantity'] - (int) $freeItems ), 2, '.', '');
+
                     //Add discount data 
                     $this->order['discounts']['free'][] = array(
                         'product-id' => $item['product-id'],
@@ -90,7 +140,7 @@ class DiscountController extends Controller {
         $globalDiscount = config('discount.global');
         //Test if total is discountable
         if ($this->order['total'] > $globalDiscount['total']) {
-            $this->order['discounts']['global'] = ( $this->order['total'] / 100) * $globalDiscount['discount'];
+            $this->order['discounts']['global'] = getDiscount($this->order['total'], $globalDiscount['discount']);
         }
     }
 
