@@ -11,5 +11,8 @@ return [
         //'cat' => 'number'
         '2' => '6',
     ],
-    'cheapest' => '20',
+    'cheapest' => [
+        //'cat' => 'discount'
+        '1' => '20'
+    ],
 ];
